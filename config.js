@@ -15,7 +15,7 @@ global.isBaileysFail = false
 
 global.owner = [
   ['967733123213', 'ستيف', true],
-  ['966565625279', 'ماس', true],
+  ['967780420764', 'ماس', true],
   
 ];
 
