@@ -1,68 +1,33 @@
-import fetch from "node-fetch"
+import axios from 'axios';
 
-let handler = async (m, {
-    conn,
-    args,
-    usedPrefix,
-    command
-}) => {
-    let text
-    if (args.length >= 1) {
-        text = args.slice(0).join(" ")
-    } else if (m.quoted && m.quoted.text) {
-        text = m.quoted.text
-    } else throw "ex : \n *.gptvoc*   ما الاسلام"
-    await m.reply(wait)
-    try {
-        let res = await ChatGpt(text)
-        await m.reply(res.content)
-    } catch (e) {
-        await m.reply(eror)
-    }
-}
-handler.help = ["gptvoc"]
-handler.tags = ["ai"];
-handler.command = /^(بوت)$/i
-handler.register = handler.limit = false
-
-export default handler
-
-/* New Line */
-
-const ChatGpt = async (prompt) => {
-    const url = "https://apps.voc.ai/api/v1/plg/prompt_stream";
-
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            credentials: "include",
-            mode: "cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                prompt
-            }),
-        });
-
-        const inputString = await response.text();
-        const dataArray = inputString.split('\n\n');
-
-        const regex = /data: (\{.*?\})/g;
-        const jsonMatches = [];
-        let match;
-
-        while ((match = regex.exec(dataArray[0])) !== null) {
-            jsonMatches.push(match[1]);
-        }
-
-        const oregex = /"data": ({.*?})/;
-        const endsTrueArray = jsonMatches.slice(-1);
-        const output = endsTrueArray[0].match(oregex);
-
-        return output ? JSON.parse(output[1]) : null;
-    } catch (error) {
-        console.error("Error fetching data:", error);
-        return null;
-    }
+const handler = async (m, { conn, usedPrefix, command, text }) => {
+  try {
+    if (!text) return m.reply(`الذكاء الإصطناعي (KOBY) \n\n مثال \n${usedPrefix + command} مرحبا يا  ${await conn.getName(m.sender)},`);
+    await conn.sendMessage(m.chat, { text: 'إنتظر...' }, { quoted: m });
+    let result = await luminAi(text, m.sender, `إسمك هو ستيف، وصانعك هو ستيف، وخصمك هو  ${await conn.getName(m.sender)}, أجب بمتعة وأستخدم في إجابتك رموز تعبيرية `);
+    await m.reply(result);
+  } catch (error) {
+    console.error('Terjadi kesalahan:', error);
+  }
 };
+
+handler.help = ['ai'];
+handler.tags = ['ai'];
+handler.command = /^بوت$/i;
+handler.limit = false;
+
+export default handler;
+
+async function luminAi(teks, pengguna = null, prompt = null, modePencarianWeb = false) {
+  try {
+    const data = { content: teks };
+    if (pengguna !== null) data.user = pengguna;
+    if (prompt !== null) data.prompt = prompt;
+    data.webSearchMode = modePencarianWeb;
+    const { data: res } = await axios.post("https://luminai.my.id/", data);
+    return res.result;
+  } catch (error) {
+    console.error('Terjadi kesalahan:', error);
+    throw error;
+  }
+}
